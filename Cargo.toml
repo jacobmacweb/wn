@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
+fern = { version = "0.6.2", features = ["colored"] }
+globset = "0.4.14"
+log = "0.4.21"
+walkdir = "2.5.0"
