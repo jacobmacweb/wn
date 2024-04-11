@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 fern = { version = "0.6.2", features = ["colored"] }
+flate2 = "1.0.28"
 globset = "0.4.14"
 log = "0.4.21"
+sha2 = "0.10.8"
 walkdir = "2.5.0"

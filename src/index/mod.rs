@@ -11,38 +11,56 @@ use std::{io::BufRead, path::PathBuf, vec};
 use globset::{Glob, GlobSetBuilder};
 use log::{debug, error, info, trace};
 
-pub fn create_empty(dir: &PathBuf, _branch: &Option<String>) {
+use crate::{objects, refs};
+
+pub fn create_empty(dir: Option<&PathBuf>, _branch: &Option<String>) {
     // Create empty directories
     let root = resolve_dir(dir);
     match std::fs::create_dir(&root) {
         Ok(_) => {
             info!("Created empty repository at {:?}", root);
+            objects::create_empty(dir);
+            refs::create_empty(dir);
         }
-        Err(e) => match e.kind() {
-            std::io::ErrorKind::AlreadyExists => {
-                error!("Repository already exists at {:?}", root);
+        Err(e) => {
+            match e.kind() {
+                std::io::ErrorKind::AlreadyExists => {
+                    error!("Repository already exists at {:?}", root);
+                }
+                _ => {
+                    error!("Failed to create directory at {:?}: {:?}", root, e);
+                }
             }
-            _ => {
-                error!("Failed to create directory at {:?}: {:?}", root, e);
-            }
-        },
+
+            std::process::exit(1);
+        }
     }
 }
 
 pub fn root_dir() -> PathBuf {
     let mut cwd = std::env::current_dir().unwrap();
     while !cwd.join(".wn").exists() {
-        cwd = cwd.parent().unwrap().to_path_buf();
+        trace!("checking directory for .wn: {:?}", cwd);
+        cwd = cwd
+            .parent()
+            .unwrap_or_else(|| {
+                error!("This is not a wn repository");
+                std::process::exit(1);
+            })
+            .to_path_buf();
     }
     trace!("Root directory is {:?}", cwd.join(".wn"));
 
     cwd
 }
 
-pub fn resolve_dir(dir: &PathBuf) -> PathBuf {
-    let mut cwd = std::env::current_dir().unwrap().join(dir);
+pub fn resolve_dir(dir: Option<&PathBuf>) -> PathBuf {
+    let mut cwd = std::env::current_dir().unwrap();
+    if let Some(d) = dir {
+        cwd = cwd.join(d);
+    }
     cwd = cwd.join(".wn");
-    trace!("Resolved directory is {:?}", cwd.join(".wn"));
+    trace!("Resolved directory is {:?}", cwd);
 
     cwd
 }

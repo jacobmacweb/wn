@@ -2,7 +2,7 @@ mod index;
 mod objects;
 mod refs;
 
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use fern::colors::{Color, ColoredLevelConfig};
@@ -39,6 +39,40 @@ enum Commands {
     Index {
         glob: Option<String>,
     },
+    Object {
+        // subcommands
+        #[command(subcommand)]
+        command: ObjectCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum ObjectCommands {
+    Add {
+        // subcommand per file/dir/commit
+        #[command(subcommand)]
+        command: AddCommands,
+    },
+    Read {
+        // The hash of the object to read
+        hash: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum AddCommands {
+    File {
+        // The path of the file to add
+        path: PathBuf,
+    },
+    Dir {
+        // The path of the directory to add
+        path: PathBuf,
+    },
+    Commit {
+        // The hash of the commit to add
+        hash: String,
+    },
 }
 
 fn main() {
@@ -47,11 +81,7 @@ fn main() {
 
     match &cli.command {
         Commands::Init { dir, branch } => {
-            create_empty(
-                &dir.clone()
-                    .unwrap_or(std::env::current_dir().unwrap().to_path_buf()),
-                branch,
-            );
+            create_empty(dir.clone().as_ref(), branch);
         }
         Commands::Index { glob } => {
             let files = index::get_files(glob.to_owned());
@@ -59,6 +89,23 @@ fn main() {
                 info!("{}", file);
             }
         }
+        Commands::Object { command } => match command {
+            ObjectCommands::Add { command } => match command {
+                AddCommands::File { path } => {
+                    let data = std::fs::read(path).unwrap();
+                    let hash = objects::create::create_file_object(&data);
+                    info!("Added file object with hash {}", hash);
+                }
+                _ => {
+                    unimplemented!();
+                }
+            },
+            ObjectCommands::Read { hash } => {
+                let (header, data) = objects::read::read_plain_object(hash);
+                info!("Header: {:?}", header);
+                std::io::stdout().write_all(&data).unwrap();
+            }
+        },
     }
 }
 

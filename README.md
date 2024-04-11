@@ -10,8 +10,7 @@ wn stands for "why not", as in "why not make another version control system"?
 
 _v0.1_
 
-- [ ] Create a repository through wn
-- [ ] Add file contents to a staging area
+- [x] Create a repository through wn
 - [ ] Commit files
 - [ ] Store compressed files from commit
 - [ ] Link to previous versions for unchanged files
@@ -27,6 +26,7 @@ _v0.2_
 
 - [ ] Compress repository into a smaller file (with deltas) to send to a server
 - [ ] Simple server to accept changes
+- [ ] Staging area to not commit directly
 
 _v0.3_
 
@@ -104,6 +104,8 @@ version 1
 ```
 
 The first line defines it as a file (git would call this a `blob`) and lists the file size. Then the file content.
+
+Most file contents will be compressed with zlib.
 
 ### Manually hash
 
